@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Tradecom ICO</title>
+
+<link rel="stylesheet" href="ico.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Tradecom ICO Sale</h1>
+
+<div class="card">
+<h3>1️⃣ Connect Wallet</h3>
+<button onclick="connectWallet()">Connect Wallet</button>
+<p id="wallet"></p>
+</div>
+
+<div class="card">
+<h3>ICO Information</h3>
+<p>MIN BUY (USD): <span id="minBuy">Loading...</span></p>
+<p>Token Price (USD): <span id="tokenPrice">Loading...</span></p>
+<p>Tokens Sold: <span id="tokensSold">Loading...</span></p>
+<p>Sale Status: <span id="saleStatus">Loading...</span></p>
+</div>
+
+<div class="card">
+<h3>Buy Tokens (buy() payable)</h3>
+<input id="buyAmount" placeholder="Enter POL Amount (example: 0.1)">
+<button onclick="buyTokens()">Buy Tokens</button>
+</div>
+
+<div class="card">
+<h3>Transaction Status</h3>
+<p id="status"></p>
+</div>
+
+</div>
+
+<script>
+
+let provider;
+let signer;
+let icoContract;
+let connected = false;
+
+const icoAddress = "0x720283F10134b115EF34f0119aa645cc5d7ba901";
+
+const icoABI = [
+{"inputs":[],"name":"MAX_TOKENS","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"MIN_BUY_USD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"USD_PRICE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"buy","outputs":[],"stateMutability":"payable","type":"function"},
+{"inputs":[],"name":"paused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+{"inputs":[],"name":"tokensSold","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+];
+
+function updateStatus(message){
+document.getElementById("status").innerHTML = message;
+}
+
+function checkConnection(){
+if(!connected){
+alert("Connect Wallet First");
+return false;
+}
+return true;
+}
+
+async function connectWallet(){
+
+if(!window.ethereum){
+alert("Install MetaMask");
+return;
+}
+
+await ethereum.request({method:'eth_requestAccounts'});
+
+provider = new ethers.providers.Web3Provider(window.ethereum);
+signer = provider.getSigner();
+
+const address = await signer.getAddress();
+document.getElementById("wallet").innerText = "Connected: " + address;
+
+icoContract = new ethers.Contract(icoAddress, icoABI, signer);
+
+connected = true;
+
+updateStatus("Wallet Connected ✅");
+
+loadICOData();
+}
+
+async function loadICOData(){
+
+const minBuy = await icoContract.MIN_BUY_USD();
+const price = await icoContract.USD_PRICE();
+const sold = await icoContract.tokensSold();
+const paused = await icoContract.paused();
+
+document.getElementById("minBuy").innerText = ethers.utils.formatUnits(minBuy, 18);
+document.getElementById("tokenPrice").innerText = ethers.utils.formatUnits(price, 18);
+document.getElementById("tokensSold").innerText = ethers.utils.formatUnits(sold, 18);
+document.getElementById("saleStatus").innerText = paused ? "Paused ❌" : "Active ✅";
+}
+
+async function buyTokens(){
+
+if(!checkConnection()) return;
+
+const amount = document.getElementById("buyAmount").value;
+
+if(!amount){
+alert("Enter POL amount");
+return;
+}
+
+try{
+
+const tx = await icoContract.buy({
+value: ethers.utils.parseEther(amount)
+});
+
+updateStatus(`
+Transaction Sent ✅<br>
+Hash: <a target="_blank" href="https://polygonscan.com/tx/${tx.hash}">${tx.hash}</a><br>
+Waiting for confirmation...
+`);
+
+await tx.wait();
+
+updateStatus(`
+Transaction Confirmed ✅<br>
+<a target="_blank" href="https://polygonscan.com/tx/${tx.hash}">View on PolygonScan</a>
+`);
+
+loadICOData();
+
+}catch(error){
+updateStatus("Error ❌ " + error.message);
+}
+
+}
+
+</script>
+
+</body>
+</html>
