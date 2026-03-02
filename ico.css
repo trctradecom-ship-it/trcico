@@ -68,3 +68,18 @@ word-break:break-all;
   }
 
 }
+
+
+/* Mobile only wallet fix */
+@media screen and (max-width: 480px) {
+
+  #wallet {
+    display: block;
+    word-break: break-all;
+    overflow-wrap: break-word;
+    white-space: normal;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+}
