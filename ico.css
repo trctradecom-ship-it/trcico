@@ -58,3 +58,13 @@ a {
 color:gold;
 word-break:break-all;
 }
+
+/* Mobile Responsive Wallet Text */
+@media screen and (max-width: 480px) {
+
+  #wallet {
+    font-size: 12px;       /* smaller text */
+    word-break: break-all; /* prevent overflow */
+  }
+
+}
