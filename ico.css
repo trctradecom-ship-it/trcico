@@ -104,3 +104,23 @@ box-sizing:border-box;
 }
 
 }
+
+
+/* ===== LAPTOP ONLY GOLD BUTTON STYLE ===== */
+
+@media (min-width:1024px){
+
+button{
+background:linear-gradient(135deg,#a87400,#ffd700,#fff2a6);
+border:1px solid #ffd700;
+color:#1a1a1a;
+box-sizing:border-box;
+transition:background .25s ease, box-shadow .25s ease;
+}
+
+button:hover{
+background:linear-gradient(135deg,#c48a00,#ffe347,#fff7c7);
+box-shadow:0 0 14px rgba(255,215,0,0.75);
+}
+
+}
