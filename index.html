@@ -118,44 +118,63 @@ document.getElementById("tokensSold").innerText = ethers.utils.formatUnits(sold,
 document.getElementById("saleStatus").innerText = paused ? "Paused ❌" : "Active ✅";
 }
 
-async function buyTokens(){
+// ========================== HANDLE TRANSACTIONS ==========================
+async function handleTx(txPromise){
+    try{
+        // ⏳ Waiting for wallet confirmation
+        document.getElementById("status").innerHTML =
+          `<span class="tx-pending">⏳ Waiting for confirmation...</span>`;
 
-if(!checkConnection()) return;
+        // Send transaction
+        const tx = await txPromise;
 
-const amount = document.getElementById("buyAmount").value;
+        // 🔄 Transaction pending link
+        document.getElementById("status").innerHTML =
+          `<a href="https://polygonscan.com/tx/${tx.hash}" target="_blank">
+            🔄 Transaction Pending (View)
+          </a>`;
 
-if(!amount){
-alert("Enter POL amount");
-return;
+        // Wait for confirmation
+        await tx.wait();
+
+        // ✅ Transaction confirmed
+        document.getElementById("status").innerHTML =
+          `<span class="tx-success">✅ Transaction Confirmed</span>`;
+
+    }catch(e){
+        // ❌ Transaction failed
+        document.getElementById("status").innerHTML =
+          `<span class="tx-fail">❌ Transaction Failed</span>`;
+    }
 }
 
-try{
 
-const tx = await icoContract.buy({
-value: ethers.utils.parseEther(amount)
-});
 
-updateStatus(`
-Transaction Sent ✅<br>
-Hash: <a target="_blank" href="https://polygonscan.com/tx/${tx.hash}">${tx.hash}</a><br>
-Waiting for confirmation...
-`);
+ 
+async function buyTokens() {
+    if (!checkConnection()) return;
 
-await tx.wait();
+    const amount = document.getElementById("buyAmount").value;
+    if (!amount) {
+        alert("Enter POL amount");
+        return;
+    }
 
-updateStatus(`
-Transaction Confirmed ✅<br>
-<a target="_blank" href="https://polygonscan.com/tx/${tx.hash}">View on PolygonScan</a>
-`);
+    try {
+        // Send transaction and let handleTx manage the status
+        const txPromise = icoContract.buy({
+            value: ethers.utils.parseEther(amount)
+        });
 
-loadICOData();
+        await handleTx(txPromise);  // ✅ this replaces manual status updates
 
-}catch(error){
-updateStatus("Error ❌ " + error.message);
+        // Refresh ICO data after confirmation
+        loadICOData();
+
+    } catch (error) {
+        updateStatus("Error ❌ " + error.message);
+    }
 }
-
-}
-
 </script>
 
 </body>
